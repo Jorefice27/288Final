@@ -12,7 +12,7 @@ import ch.aplu.xboxcontroller.*;
  *
  * @author johnn_000
  */
-public class Controller {
+public class Controller  extends XboxControllerAdapter{
     
     private XboxController x;
     

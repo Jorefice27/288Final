@@ -2,11 +2,6 @@ package pkg228gui;
 
 
 
-
-
-
-
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -30,6 +25,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.ArcType;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
@@ -37,21 +33,6 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import pkg228gui.Link;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  *
@@ -66,6 +47,10 @@ public class GUI extends Application{
     private Rectangle detectionTextBox;
     private Rectangle detectionAlertBox;
     private Rectangle botStatusBox;
+//    private ArrayList<Pillar> pillars;
+//    private ArrayList<Circle> mapPoints;
+    private Pillar[] pillars = new Pillar[5];
+    private Circle[] mapPoints = new Circle[5];
     private static Rectangle connect;
     private Arc arc;
     private Group root;
@@ -81,13 +66,6 @@ public class GUI extends Application{
     private boolean firstClick = true;
     
     private enum event {LEFTBUMP, RIGHTBUMP, LIGHTSENS}; 
-
-
-
-
-
-
-
 
     @Override
     public void start(Stage stage) throws Exception
@@ -142,13 +120,30 @@ public class GUI extends Application{
                {
                    comm.sendByte('5');
                }
+               //Move 5 cm
                if(e.getText().equals("1"))
                {
                    comm.sendByte('a');
                }
+               //Move 10 cm
                if(e.getText().equals("2"))
                {
-                   updateDetectionText("10");
+                   comm.sendByte('b');
+               }
+               //Move 15 cm
+               if(e.getText().equals("3"))
+               {
+                   comm.sendByte('c');
+               }
+               //Move 20 cm
+               if(e.getText().equals("4"))
+               {
+                   comm.sendByte('d');
+               }
+               //Move 25 cm
+               if(e.getText().equals("5"))
+               {
+                   comm.sendByte('e');
                }
            }
         };
@@ -187,19 +182,17 @@ public class GUI extends Application{
         arc = new Arc();
         arc.setCenterX(SCENEWIDTH / 2);
         arc.setCenterY(SCENEHEIGHT);
-        arc.setRadiusX(280.0f);
-        arc.setRadiusY(230.0f);
+        arc.setRadiusX(240.0f);
+        arc.setRadiusY(240.0f);
         arc.setStartAngle(0.0f);
         arc.setLength(180.0f); //degrees 
         arc.setFill(Color.AQUA);
         arc.setOpacity(0.8);
         arc.setType(ArcType.ROUND);
-
-
-
-
-
-
+        for(int i = 0; i < mapPoints.length; i++)
+        {
+            mapPoints[i] = new Circle();
+        }
 
 
     }
@@ -332,13 +325,6 @@ public class GUI extends Application{
     
     private class LightMeUp implements Runnable {
 
-
-
-
-
-
-
-
         private Text textToLightUp;
         private int durationMili;
         
@@ -347,9 +333,6 @@ public class GUI extends Application{
             this.textToLightUp = textToLightUp;
             this.durationMili = durationMili;
         }
-
-
-
 
         @Override
         public void run()
@@ -398,13 +381,6 @@ public class GUI extends Application{
         distanceTxt.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 22));
         distanceTxt.setFill(Color.AQUA);
 
-
-
-
-
-
-
-
     }
     
     private void makeConnect()
@@ -443,11 +419,6 @@ public class GUI extends Application{
                         connectText.setY(SCENEHEIGHT * 0.94);
                         
                         connected = true;
-                    
-
-
-
-
                     }
                     catch (IOException ex) 
                     {
@@ -483,6 +454,7 @@ public class GUI extends Application{
         children.add(connectText);
         System.out.println(detectionText.size());
         children.addAll(detectionText);
+        children.addAll(mapPoints);
     }
     
     private void updateDetectionText(String text)
@@ -493,6 +465,27 @@ public class GUI extends Application{
             detectionText.get(i).setText(detectionText.get(i - 1).getText());
         }
         detectionText.get(0).setText(text);
+    }
+    
+    private void updateMap()
+    {
+        for(int i = 0; i < mapPoints.length; i++)
+        {
+            mapPoints[i].setOpacity(0);
+        }
+        for(int i = 0; i < pillars.length; i++)
+        {
+           mapPoints[i].setCenterX(pillars[i].centerX());
+           mapPoints[i].setCenterY(pillars[i].centerY());
+           mapPoints[i].setOpacity(1);
+        }
+    }
+    
+    private void addToMap(double angle, double dist)
+    {
+       pillars = new Pillar[5];
+       Pillar p = new Pillar(angle, dist);
+        
     }
     
     public static void main(String[] args)
