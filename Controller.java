@@ -3,22 +3,22 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package pkg228gui;
+package pgk28gui;
 
 import ch.aplu.util.*;
 import ch.aplu.xboxcontroller.*;
+import java.awt.Color;
 
 /**
  *
- * @author johnn_000
+ * @author John
  */
-public class Controller  extends XboxControllerAdapter{
+public class Controller {
     
-    private XboxController x;
-    
-    public Controller()
+//    private GPanel p = new GPanel("Connecting...", -100, 100, -100, 100);
+    public static void main(String[] args)
     {
-        x = new XboxController();
-        
+        XboxController xc = new XboxController();
     }
+
 }

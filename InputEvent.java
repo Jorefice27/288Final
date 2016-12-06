@@ -3,23 +3,27 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package pkg228gui;
+package pgk28gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javafx.event.Event;
-import javafx.event.EventHandler;
+import javafx.event.EventTarget;
+import javafx.event.EventType;
 
 /**
  *
- * @author johnn_000
+ * @author John
  */
-public class InputEvent implements EventHandler{
+public class InputEvent implements ActionListener{
 
-   
     @Override
-    public void handle(Event event) {
+    public void actionPerformed(ActionEvent e) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
+    
+    
+    
     
 }

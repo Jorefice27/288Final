@@ -1,4 +1,4 @@
-package pkg228gui;
+package pgk28gui;
 
 
 
@@ -32,7 +32,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import pkg228gui.Link;
+import pgk28gui.Link;
 
 /**
  *
@@ -360,6 +360,48 @@ public class GUI extends Application{
     
     } 
     
+    public void triggerReceive(event e)
+    {
+        CommReceive x = null;
+        String message = comm.recieveMessage();
+        if(message.equals("lb"))
+        {
+            //trigger left bumper
+        }
+        if(message.equals("rb"))
+        {
+            //trigger right bumper
+        }
+        if(message.equals("bb"))
+        {
+            //trigger both bumpers
+        }
+    }
+    
+    private class CommReceive implements Runnable
+    {
+        ArrayList<String> messages;
+        
+        public CommReceive()
+        {
+            messages = new ArrayList<String>();
+            
+            
+        }
+
+        @Override
+        public void run() {
+            while(true)
+            {
+                try {
+                    String message = comm.recieveMessage();
+                    
+                } catch (IOException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
     private void setStatusBox()
     {
         
@@ -452,7 +494,6 @@ public class GUI extends Application{
         children.add(distanceTxt);   
         children.add(connect);
         children.add(connectText);
-        System.out.println(detectionText.size());
         children.addAll(detectionText);
         children.addAll(mapPoints);
     }
@@ -495,7 +536,3 @@ public class GUI extends Application{
        
     }
 }
-
-
-
-
