@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package pgk28gui;
+package pkg228gui;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -61,22 +61,7 @@ public class Link {
 //        return in.read(new char[50]);
         return in.readLine();
     }
-    
-    private class CommReceive implements Runnable
-    {
-        ArrayList<String> messages;
         
-        public CommReceive()
-        {
-            messages = new ArrayList<String>();
-        }
-
-        @Override
-        public void run() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-    }
-    
    public static void main(String[] args) throws IOException
    {
       Integer x = 0x07030104;

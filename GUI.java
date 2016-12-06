@@ -1,7 +1,8 @@
-package pgk28gui;
+package pkg228gui;
 
 
 
+import ch.aplu.xboxcontroller.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
@@ -32,7 +34,7 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import pgk28gui.Link;
+import pkg228gui.Link;
 
 /**
  *
@@ -58,14 +60,19 @@ public class GUI extends Application{
     private static Text leftBumper;
     private static Text rightBumper;
     private static Text lightSensor;
-    private static Text distanceTxt;
+    private static Text stopText;
+    private static Text moveText;
+    private static Text turnTextL;
+    private static Text turnTextR;
+    private static Text sweepText;
     private static Text connectText;
     private ArrayList<Text> detectionText;
     private Link comm;
+    private Controller controller;
     private boolean connected;
     private boolean firstClick = true;
     
-    private enum event {LEFTBUMP, RIGHTBUMP, LIGHTSENS}; 
+    private enum event {LEFTBUMP, RIGHTBUMP, LIGHTSENS, MOVING, STOPPED, SWEEP, LEFTTURN, RIGHTTURN}; 
 
     @Override
     public void start(Stage stage) throws Exception
@@ -80,6 +87,10 @@ public class GUI extends Application{
         
         
         setGroup();
+        controller = new Controller();
+        //receive data from bot
+        CommReceive r = new CommReceive();
+        new Thread(r).start();
         
         
         
@@ -140,11 +151,6 @@ public class GUI extends Application{
                {
                    comm.sendByte('d');
                }
-               //Move 25 cm
-               if(e.getText().equals("5"))
-               {
-                   comm.sendByte('e');
-               }
            }
         };
         scene.setOnKeyPressed(handleController);
@@ -191,10 +197,11 @@ public class GUI extends Application{
         arc.setType(ArcType.ROUND);
         for(int i = 0; i < mapPoints.length; i++)
         {
+//            Pillar p = new Pillar(30 * (1 + i), 40, 45 * 1);
+//            pillars[i] = p;
+//            mapPoints[i] = pillars[i].getCircle();
             mapPoints[i] = new Circle();
         }
-
-
     }
     
     private void setMainHUDtext()
@@ -307,6 +314,9 @@ public class GUI extends Application{
         
     }
     
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //Alert Light Up Trigger Stuff
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     public void triggerEvent(event e){
         LightMeUp test = null;
         if (e == event.LEFTBUMP) {
@@ -347,10 +357,6 @@ public class GUI extends Application{
                     textToLightUp.setOpacity(textToLightUp.getOpacity() - .01);
                     Thread.sleep(8);
                 }
-
-
-
-
                 textToLightUp.setFill(Color.BLACK);
             } 
             catch (InterruptedException ex) {
@@ -359,22 +365,22 @@ public class GUI extends Application{
         }
     
     } 
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //Receive Stuff 
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     public void triggerReceive(event e)
     {
         CommReceive x = null;
-        String message = comm.recieveMessage();
-        if(message.equals("lb"))
+        String message;
+        try 
         {
-            //trigger left bumper
+            message = comm.recieveMessage();
         }
-        if(message.equals("rb"))
+        catch (IOException ex)
         {
-            //trigger right bumper
-        }
-        if(message.equals("bb"))
-        {
-            //trigger both bumpers
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -382,12 +388,7 @@ public class GUI extends Application{
     {
         ArrayList<String> messages;
         
-        public CommReceive()
-        {
-            messages = new ArrayList<String>();
-            
-            
-        }
+        public CommReceive(){};
 
         @Override
         public void run() {
@@ -395,6 +396,55 @@ public class GUI extends Application{
             {
                 try {
                     String message = comm.recieveMessage();
+                    Scanner sc = new Scanner(message);
+                    String scanned = sc.next();
+                    if(scanned.equals("LB"))
+                    {
+                        //trigger left bumper
+                        LightMeUp test = new LightMeUp(leftBumper, 1500);
+                    }
+                    if(scanned.equals("RB"))
+                    {
+                        LightMeUp test = new LightMeUp(rightBumper, 1500);
+                    }
+                    if(scanned.equals("BB"))
+                    {
+                        LightMeUp test = new LightMeUp(leftBumper, 1500);
+                        test = new LightMeUp(rightBumper, 1500);
+                    }
+                    if(scanned.equals("LS"))
+                    {
+                        LightMeUp test = new LightMeUp(lightSensor, 1500);
+                    }
+                    if(scanned.equals("Stop"))
+                    {
+                        //update stoped notificaton
+                    }
+                    if(scanned.equals("Move"))
+                    {
+                        //update moving notification
+                    }
+                    if(scanned.equals("SS"))
+                    {
+                        //turn on sweeping notification                        
+                    }
+                    if(scanned.equals("FS"))
+                    {
+                        //turn off sweeping notification
+                    }
+                    if(scanned.equals("Object"))
+                    {
+                        int index = 0;
+                        while(!scanned.equals("end"))
+                        {
+                            int angle = sc.nextInt();
+                            int distance = sc.nextInt();
+                            int width = sc.nextInt();
+                            addPillar(angle, distance, width, index++);
+                            scanned = sc.next();
+                        }
+                        updateMap();
+                    }
                     
                 } catch (IOException ex) {
                     Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -402,6 +452,7 @@ public class GUI extends Application{
             }
         }
     }
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     private void setStatusBox()
     {
         
@@ -416,12 +467,48 @@ public class GUI extends Application{
         botStatusBox.setFill(Color.CYAN);
         botStatusBox.setOpacity(0.3);
         
-        int x = 3;
-        distanceTxt = new Text("Distance traveled since last stop (cm):");
-        distanceTxt.setX(SCENEWIDTH * 0.66);
-        distanceTxt.setY(SCENEHEIGHT * 0.58);
-        distanceTxt.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 22));
-        distanceTxt.setFill(Color.AQUA);
+        //Initialize sweep text
+        sweepText = new Text("Sweeping");
+        sweepText.setX(SCENEWIDTH * 0.66);
+        sweepText.setY(SCENEHEIGHT * 0.58);
+        sweepText.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 30));
+        sweepText.setFill(Color.BLACK);
+        sweepText.setOpacity(0.1);
+        
+        //Initialize Moving Text
+        moveText = new Text("Moving");
+        moveText.setX(SCENEWIDTH * 0.66);
+        moveText.setY(SCENEHEIGHT * 0.62);
+        moveText.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 30));
+        moveText.setFill(Color.BLACK);
+        moveText.setOpacity(0.1);
+        
+        stopText = new Text("Stopped");
+        stopText.setX(SCENEWIDTH * 0.66);
+        stopText.setY(SCENEHEIGHT * 0.66);
+        stopText.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 30));
+        stopText.setFill(Color.BLACK);
+        stopText.setOpacity(0.1);
+        
+        //Initialize turning text
+        turnTextL = new Text("Turning Left");
+        turnTextL.setX(SCENEWIDTH * 0.66);
+        turnTextL.setY(SCENEHEIGHT * 0.7);
+        turnTextL.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 30));
+        turnTextL.setFill(Color.BLACK);
+        turnTextL.setOpacity(0.1);
+        
+        turnTextR = new Text("Turning Right");
+        turnTextR.setX(SCENEWIDTH * 0.66);
+        turnTextR.setY(SCENEHEIGHT * 0.74);
+        turnTextR.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 30));
+        turnTextR.setFill(Color.BLACK);
+        turnTextR.setOpacity(0.1);
+        
+        
+        
+        
+        //Initialize turning text
 
     }
     
@@ -454,11 +541,11 @@ public class GUI extends Application{
                 {
                     try
                     {
-                        comm = new Link();
                         connectText.setText("Connecting...");
                         connectText.setFont(Font.font("sans-serif", FontWeight.BOLD, FontPosture.REGULAR, 30));
                         connectText.setX(SCENEWIDTH * 0.05 + 70);
                         connectText.setY(SCENEHEIGHT * 0.94);
+                        comm = new Link();
                         
                         connected = true;
                     }
@@ -491,11 +578,19 @@ public class GUI extends Application{
         children.add(leftBumper);
         children.add(rightBumper);
         children.add(lightSensor);
-        children.add(distanceTxt);   
+        children.add(sweepText);   
+        children.add(stopText);
+        children.add(moveText);
+        children.add(turnTextL);
+        children.add(turnTextR);
         children.add(connect);
         children.add(connectText);
         children.addAll(detectionText);
-        children.addAll(mapPoints);
+//        children.addAll(mapPoints);
+        for(int i = 0; i < mapPoints.length; i++)
+        {
+            children.add(mapPoints[i]);
+        }
     }
     
     private void updateDetectionText(String text)
@@ -512,23 +607,150 @@ public class GUI extends Application{
     {
         for(int i = 0; i < mapPoints.length; i++)
         {
-            mapPoints[i].setOpacity(0);
+            mapPoints[i].setFill(Color.TRANSPARENT);
         }
         for(int i = 0; i < pillars.length; i++)
         {
+            if(pillars[i] == null)
+            {
+                break;
+            }
            mapPoints[i].setCenterX(pillars[i].centerX());
            mapPoints[i].setCenterY(pillars[i].centerY());
-           mapPoints[i].setOpacity(1);
+           mapPoints[i].setFill(pillars[i].getCircle().getFill());
+           updateDetectionText("Object " + pillars[i].getDistance() + " cm away at " + pillars[i].getAngle() + " degrees");
+        }
+        pillars = new Pillar[5];
+    }
+    
+    private void addPillar(double angle, double dist, double width, int index)
+    {
+       Pillar p = new Pillar(angle, dist, width);
+       pillars[index] = p;
+    }
+    
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //Private Pillar Class
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    private class Pillar {
+
+    private Circle c;
+    private double dist;
+    private double angle;
+    public double width;
+
+    public Pillar(double angle, double dist, double width)
+    {
+        this.dist = dist;
+        this.angle = angle;
+        angle = (angle * 3.14159) / 180; //convert angle from degrees to radians
+        this.width = width;
+        int x0 = SCENEWIDTH / 2;
+        int y0 = SCENEHEIGHT;
+        double cm = 228 / 80f; //pixels per cm
+        double x = dist * Math.cos(angle); //x dist in cm
+        double y = dist * Math.sin(angle); //y dist in cm
+        c = new Circle();
+        c.setRadius(10);
+        c.setCenterX(x0 + (x * cm));
+        c.setCenterY(y0 - (y * cm));
+        if(isTargetPillar())
+        {
+//            c.setFill(Color.LAWNGREEN);
+            c.setFill(Color.SPRINGGREEN);
+        }
+        else
+        {
+            c.setFill(Color.RED);
         }
     }
     
-    private void addToMap(double angle, double dist)
+    public Circle getCircle()
     {
-       pillars = new Pillar[5];
-       Pillar p = new Pillar(angle, dist);
-        
+        return c;
     }
     
+    public double centerX()
+    {
+        return c.getCenterX();
+    }
+    
+    public double centerY()
+    {
+        return c.getCenterY();
+    }
+    
+    public double getDistance()
+    {
+        return dist;
+    }
+    
+    public double getAngle()
+    {
+        return angle;
+    }
+    
+    public boolean isTargetPillar()
+    {
+        return width < 35;
+    }
+}
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //Private Controller class
+    private class Controller extends XboxControllerAdapter
+    {
+        private XboxController x;
+        private int i;
+        
+        public Controller()
+        {
+            x = new XboxController();
+            x.addXboxControllerListener(this);
+            i = 0;
+        }
+        
+        @Override
+        public void rightTrigger(double value)
+        {
+            if(value == 1)
+            {
+                comm.sendByte('1');
+            }
+        }
+        @Override
+        public void leftTrigger(double value)
+        {
+            if(value == 1)
+            {
+                comm.sendByte('2');
+            }
+        }
+        @Override
+        public void leftShoulder(boolean pressed)
+        {
+            if(pressed)
+            {
+                comm.sendByte('3');
+            }
+        }
+        @Override
+        public void rightShoulder(boolean pressed)
+        {
+            if(pressed)
+            {
+                comm.sendByte('4');
+            }
+        }
+        @Override
+        public void buttonA(boolean pressed)
+        {
+            
+        }
+        
+    }
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     public static void main(String[] args)
     {
         

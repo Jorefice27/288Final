@@ -1,4 +1,4 @@
-package pgk28gui;
+package pkg228gui;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -19,7 +19,7 @@ public class Pillar {
 //    arc.setRadiusX(240.0f);
 //    arc.setRadiusY(240.0f);
     
-    public Pillar(double angle, double dist, int width)
+    public Pillar(double angle, double dist, double width)
     {
         this.dist = dist;
         this.angle = angle;
